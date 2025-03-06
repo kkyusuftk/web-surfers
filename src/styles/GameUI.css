@@ -77,13 +77,57 @@
 	text-align: left;
 }
 
+.controls-container {
+	display: flex;
+	justify-content: space-around;
+	gap: 20px;
+	margin-top: 15px;
+}
+
+.keyboard-controls,
+.touch-controls {
+	flex: 1;
+	background-color: rgba(0, 0, 0, 0.3);
+	padding: 15px;
+	border-radius: 8px;
+}
+
+.keyboard-controls h3,
+.touch-controls h3 {
+	color: #ff9900;
+	margin: 0 0 10px 0;
+	text-align: center;
+}
+
 .controls ul {
 	list-style-type: none;
 	padding: 0;
+	margin: 0;
 }
 
 .controls li {
 	margin: 10px 0;
+	font-size: 14px;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+	.controls-container {
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.keyboard-controls {
+		display: none; /* Hide keyboard controls on mobile */
+	}
+
+	.touch-controls {
+		width: 100%;
+	}
+
+	.controls li {
+		text-align: center;
+	}
 }
 
 .start-button {

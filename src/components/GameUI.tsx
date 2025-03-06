@@ -37,13 +37,28 @@ export const GameUI = () => {
 					<p>Press SPACE to start</p>
 					<div className="controls">
 						<p>Controls:</p>
-						<ul>
-							<li>W or ↑: Jump</li>
-							<li>A or ←: Move Left</li>
-							<li>S or ↓: Roll</li>
-							<li>D or →: Move Right</li>
-							<li>ESC: Pause</li>
-						</ul>
+						<div className="controls-container">
+							<div className="keyboard-controls">
+								<h3>Keyboard:</h3>
+								<ul>
+									<li>W or ↑: Jump</li>
+									<li>A or ←: Move Left</li>
+									<li>S or ↓: Roll</li>
+									<li>D or →: Move Right</li>
+									<li>ESC: Pause</li>
+								</ul>
+							</div>
+							<div className="touch-controls">
+								<h3>Touch:</h3>
+								<ul>
+									<li>Swipe Up: Jump</li>
+									<li>Swipe Left: Move Left</li>
+									<li>Swipe Down: Roll</li>
+									<li>Swipe Right: Move Right</li>
+									<li>Tap: Pause</li>
+								</ul>
+							</div>
+						</div>
 					</div>
 					<button className="start-button" onClick={startGame}>
 						Start Game

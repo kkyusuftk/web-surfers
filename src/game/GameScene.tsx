@@ -7,6 +7,7 @@ import { useGameStore } from "../store/gameStore";
 import { Environment } from "./Environment";
 import { Player } from "./Player";
 import { useKeyboardControls } from "./useKeyboardControls";
+import { useTouchControls } from "./useTouchControls";
 
 // Camera component that follows the player
 const FollowCamera = () => {
@@ -61,8 +62,9 @@ const FollowCamera = () => {
 };
 
 export const GameScene = () => {
-	// Initialize keyboard controls
+	// Initialize keyboard and touch controls
 	useKeyboardControls();
+	useTouchControls();
 
 	return (
 		<Canvas shadows>
