@@ -60,9 +60,8 @@ export const useKeyboardControls = () => {
 					break;
 				case "ArrowUp":
 				case "KeyW":
-				case "Space":
-					// Only allow jumping if not currently rolling
-					if (!isRolling) {
+					// Only allow jumping if not currently rolling or jumping
+					if (!isRolling && !isJumping) {
 						setJumping(true);
 					}
 					break;
@@ -77,6 +76,10 @@ export const useKeyboardControls = () => {
 				case "Escape":
 					pauseGame();
 					break;
+				case "Space":
+					// Space is now only used for pausing
+					pauseGame();
+					break;
 			}
 		};
 
@@ -85,7 +88,6 @@ export const useKeyboardControls = () => {
 			switch (e.code) {
 				case "ArrowUp":
 				case "KeyW":
-				case "Space":
 					setJumping(false);
 					break;
 				case "ArrowDown":

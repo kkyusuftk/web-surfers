@@ -36,9 +36,7 @@ export const Environment = () => {
 		isPaused,
 		speed,
 		addScore,
-		addCoin,
 		increaseSpeed,
-		distance,
 		setDistance,
 	} = useGameStore();
 

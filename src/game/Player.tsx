@@ -23,6 +23,7 @@ export const Player = () => {
 		speed,
 		setJumping,
 		setRolling,
+		setLane,
 	} = useGameStore();
 
 	// Animation state
@@ -86,23 +87,16 @@ export const Player = () => {
 	// Reset player position when game starts
 	useEffect(() => {
 		if (isPlaying) {
-			// Reset position to center
+			// Reset player position to center
 			api.position.set(0, 0.5, 0);
+			
+			// Update refs to match
 			position.current = [0, 0.5, 0];
 			targetLanePosition.current = 0;
-
-			// Reset all animation states
-			if (playerModelRef.current) {
-				playerModelRef.current.rotation.x = 0;
-				playerModelRef.current.position.y = 0;
-				playerModelRef.current.children.forEach((child) => {
-					if (child instanceof THREE.Mesh) {
-						child.rotation.x = 0;
-						child.position.z = 0;
-					}
-				});
-			}
-
+			
+			// Reset lane to center (0)
+			setLane(0);
+			
 			// Reset all refs
 			isJumpingRef.current = false;
 			canJump.current = true;
@@ -111,7 +105,7 @@ export const Player = () => {
 			rollRotation.current = 0;
 			setRunCycle(0);
 		}
-	}, [isPlaying, api]);
+	}, [isPlaying, api, setLane]);
 
 	// Update target lane position when lane changes
 	useEffect(() => {
@@ -121,26 +115,21 @@ export const Player = () => {
 	// Handle jumping
 	useEffect(() => {
 		// Only start a jump if we're not already jumping, not rolling, and can jump
-		if (
-			isJumping &&
-			!isJumpingRef.current &&
-			!isRollingRef.current &&
-			canJump.current
-		) {
+		if (isJumping && !isJumpingRef.current && !isRollingRef.current && canJump.current) {
 			isJumpingRef.current = true;
 			canJump.current = false; // Prevent new jumps until this one completes
 			jumpStartTime.current = Date.now();
-
+			
 			// Play jump sound
 			getSounds().playJumpSound();
-
+			
 			// End jump after duration
 			const jumpTimer = setTimeout(() => {
 				isJumpingRef.current = false;
 				setJumping(false); // Reset the jump state in the store
 				canJump.current = true; // Immediately allow new jumps
 			}, JUMP_DURATION);
-
+			
 			return () => clearTimeout(jumpTimer);
 		}
 	}, [isJumping, setJumping]);
@@ -177,10 +166,14 @@ export const Player = () => {
 	useFrame((_, delta) => {
 		if (!isPlaying || gameOver || isPaused) return;
 
+		// Get current position
+		const currentX = position.current[0];
+		// Always use fixed Z position of 0 to prevent any forward movement
+		const fixedZ = 0;
+		
 		// Smooth lane transitions - apply to player position
 		// Use a smaller lerp factor for smoother transitions
 		const lerpFactor = Math.min(delta * 5, 0.1); // Cap the lerp factor to prevent jitter
-		const currentX = position.current[0];
 		const newX = THREE.MathUtils.lerp(
 			currentX,
 			targetLanePosition.current,
@@ -191,14 +184,15 @@ export const Player = () => {
 		if (isJumpingRef.current) {
 			const jumpElapsed = Date.now() - jumpStartTime.current;
 			const jumpProgress = Math.min(jumpElapsed / JUMP_DURATION, 1.0);
-
+			
 			// Smooth parabolic jump curve using sine for up and down motion
 			const jumpCurve = Math.sin(jumpProgress * Math.PI);
 			const height = jumpCurve * JUMP_HEIGHT;
-
+			
 			// Set position directly for more reliable jumping
-			api.position.set(newX, 0.5 + Math.max(0, height), position.current[2]);
-
+			// Always use fixed Z position of 0 to prevent any forward movement
+			api.position.set(newX, 0.5 + Math.max(0, height), fixedZ);
+			
 			// Animate the player model for jumping
 			if (playerModelRef.current) {
 				// More dynamic leg animation based on jump phase
@@ -250,28 +244,27 @@ export const Player = () => {
 			// Rolling animation
 			const rollElapsed = Date.now() - rollStartTime.current;
 			const rollProgress = Math.min(rollElapsed / ROLL_DURATION, 1.0);
-
+			
 			// Calculate rotation for a full 360-degree roll (negative for forward roll)
 			rollRotation.current = -rollProgress * Math.PI * 2;
-
+			
 			// Apply position - slightly lower during roll
-			api.position.set(newX, 0.3, position.current[2]);
-
+			// Always use fixed Z position of 0 to prevent any forward movement
+			api.position.set(newX, 0.3, fixedZ);
+			
 			if (playerModelRef.current) {
 				// Apply rotation to the entire player model
 				playerModelRef.current.rotation.x = rollRotation.current;
-
+				
 				// Tuck in limbs during roll
 				playerModelRef.current.children[1].rotation.x = 1.2;
 				playerModelRef.current.children[2].rotation.x = 1.2;
-
+				
 				// Make the player into a ball shape during roll (adjust sine for forward roll)
-				playerModelRef.current.children[0].position.z =
-					-0.2 * Math.sin(rollRotation.current);
-				playerModelRef.current.children[3].position.z =
-					-0.2 * Math.sin(rollRotation.current);
+				playerModelRef.current.children[0].position.z = -0.2 * Math.sin(rollRotation.current);
+				playerModelRef.current.children[3].position.z = -0.2 * Math.sin(rollRotation.current);
 			}
-
+			
 			// End roll if we've reached the end of the duration
 			if (rollProgress >= 1.0) {
 				// Reset player model rotation and positions
@@ -280,13 +273,14 @@ export const Player = () => {
 					playerModelRef.current.children[0].position.z = 0; // Reset body position
 					playerModelRef.current.children[3].position.z = 0; // Reset head position
 				}
-
+				
 				// Reset player height
-				api.position.set(newX, 0.5, position.current[2]);
-
+				// Always use fixed Z position of 0 to prevent any forward movement
+				api.position.set(newX, 0.5, fixedZ);
+				
 				isRollingRef.current = false;
 				setRolling(false);
-
+				
 				// Allow a new roll after a small delay
 				setTimeout(() => {
 					canRoll.current = true;
@@ -294,8 +288,9 @@ export const Player = () => {
 			}
 		} else {
 			// Normal ground movement
-			api.position.set(newX, 0.5, position.current[2]);
-
+			// Always use fixed Z position of 0 to prevent any forward movement
+			api.position.set(newX, 0.5, fixedZ);
+			
 			// Running animation
 			if (playerModelRef.current) {
 				// Update run cycle
