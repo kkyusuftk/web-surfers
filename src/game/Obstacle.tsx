@@ -17,7 +17,7 @@ export const Obstacle = ({
 	color = "gold",
 	type,
 }: ObstacleProps) => {
-	const { isPlaying, addCoin } = useGameStore();
+	const { isPlaying, isPaused, addCoin } = useGameStore();
 
 	// Create a physics body for the coin
 	const [ref, api] = useBox(() => ({
@@ -57,7 +57,7 @@ export const Obstacle = ({
 	const hoverRef = useRef(0);
 
 	useFrame((_, delta) => {
-		if (!isPlaying || !coinRef.current) return;
+		if (!isPlaying || isPaused || !coinRef.current) return;
 
 		// Rotate coins like a globe (around Y axis)
 		rotationRef.current += delta * 3;

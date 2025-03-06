@@ -33,9 +33,12 @@ type TrackSegmentType = {
 export const Environment = () => {
 	const {
 		isPlaying,
+		isPaused,
 		speed,
 		addScore,
+		addCoin,
 		increaseSpeed,
+		distance,
 		setDistance,
 	} = useGameStore();
 
@@ -157,7 +160,7 @@ export const Environment = () => {
 
 	// Animation loop
 	useFrame((_, delta) => {
-		if (!isPlaying) return;
+		if (!isPlaying || isPaused) return;
 
 		// Calculate movement amount this frame
 		const moveAmount = speed * delta;

@@ -4,6 +4,7 @@ import { useGameStore } from "../store/gameStore";
 export const useKeyboardControls = () => {
 	const {
 		isPlaying,
+		isPaused,
 		gameOver,
 		startGame,
 		pauseGame,
@@ -26,6 +27,15 @@ export const useKeyboardControls = () => {
 				return;
 			}
 
+			// Handle pause state
+			if (isPaused) {
+				// P or Space to resume
+				if (e.code === "KeyP" || e.code === "Space") {
+					resumeGame();
+				}
+				return;
+			}
+
 			if (!isPlaying) {
 				// Space to start/resume
 				if (e.code === "Space") {
@@ -34,10 +44,6 @@ export const useKeyboardControls = () => {
 					} else {
 						resumeGame();
 					}
-				}
-				// P to pause
-				if (e.code === "KeyP") {
-					pauseGame();
 				}
 				return;
 			}
@@ -68,6 +74,7 @@ export const useKeyboardControls = () => {
 					}
 					break;
 				case "KeyP":
+				case "Escape":
 					pauseGame();
 					break;
 			}
@@ -97,6 +104,7 @@ export const useKeyboardControls = () => {
 		};
 	}, [
 		isPlaying,
+		isPaused,
 		gameOver,
 		startGame,
 		pauseGame,

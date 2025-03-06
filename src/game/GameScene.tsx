@@ -15,29 +15,47 @@ const FollowCamera = () => {
 
 	// Store the target position for smooth transitions
 	const targetX = useRef(0);
+	// Store the current interpolation value
+	const currentX = useRef(0);
+	// Store the previous lane for smoother transitions
+	const prevLane = useRef(0);
 
 	// Update target position when lane changes
 	useEffect(() => {
+		// Calculate target position based on lane
 		targetX.current = lane * 2 * 0.3; // Lane width * dampening factor
+		
+		// Store previous lane for reference
+		prevLane.current = lane;
 	}, [lane]);
 
 	useFrame((_, delta) => {
 		if (!cameraRef.current) return;
 
-		// Very smooth camera movement - reduced follow speed
-		cameraRef.current.position.x = THREE.MathUtils.lerp(
-			cameraRef.current.position.x,
+		// Use a very small lerp factor for ultra-smooth camera movement
+		const lerpFactor = delta * 1.5; // Reduced from 3 to 1.5 for smoother transitions
+		
+		// Smoothly interpolate the current position
+		currentX.current = THREE.MathUtils.lerp(
+			currentX.current,
 			targetX.current,
-			delta * 3, // Slower transition for more stability
+			lerpFactor
 		);
+		
+		// Apply the smoothed position to the camera
+		cameraRef.current.position.x = currentX.current;
+		
+		// Make camera look at a point slightly ahead of the player
+		// Use the smoothed X position for the lookAt target as well
+		cameraRef.current.lookAt(new THREE.Vector3(currentX.current, 0.5, -10));
 	});
 
 	return (
 		<PerspectiveCamera
 			ref={cameraRef}
 			makeDefault
-			position={[0, 1.5, 3]} // Increased height (y) and decreased distance behind player (z)
-			fov={75} // Decreased FOV for better perspective
+			position={[0, 2.5, 6]} // Higher (y) and further behind (z) for a better view
+			fov={65} // Adjusted FOV for better perspective
 		/>
 	);
 };

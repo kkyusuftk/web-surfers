@@ -17,6 +17,7 @@ export const Player = () => {
 		isJumping,
 		isRolling,
 		isPlaying,
+		isPaused,
 		gameOver,
 		endGame,
 		speed,
@@ -112,7 +113,7 @@ export const Player = () => {
 		}
 	}, [isPlaying, api]);
 
-	// Update target lane when lane changes
+	// Update target lane position when lane changes
 	useEffect(() => {
 		targetLanePosition.current = lane * LANE_WIDTH;
 	}, [lane]);
@@ -174,14 +175,16 @@ export const Player = () => {
 
 	// Animation loop
 	useFrame((_, delta) => {
-		if (!isPlaying || gameOver) return;
+		if (!isPlaying || gameOver || isPaused) return;
 
 		// Smooth lane transitions - apply to player position
+		// Use a smaller lerp factor for smoother transitions
+		const lerpFactor = Math.min(delta * 5, 0.1); // Cap the lerp factor to prevent jitter
 		const currentX = position.current[0];
 		const newX = THREE.MathUtils.lerp(
 			currentX,
 			targetLanePosition.current,
-			delta * 10,
+			lerpFactor
 		);
 
 		// Handle jumping
