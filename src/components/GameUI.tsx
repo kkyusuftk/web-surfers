@@ -1,4 +1,12 @@
+import { useState, useEffect } from "react";
 import { useGameStore } from "../store/gameStore";
+import { ScoreQueue } from "../services/scoreQueue";
+import { UserService } from "../services/userService";
+import LeaderboardService from "../services/leaderboardService";
+import { NameSubmissionDialog } from "./NameSubmissionDialog";
+import { FirstTimeUserDialog } from "./FirstTimeUserDialog";
+import { UserProfileDisplay } from "./UserProfileDisplay";
+import { LeaderboardModal } from "./LeaderboardModal";
 import "../styles/GameUI.css";
 
 export const GameUI = () => {
@@ -14,8 +22,99 @@ export const GameUI = () => {
 		resetGame,
 	} = useGameStore();
 
+	const [showNameDialog, setShowNameDialog] = useState(false);
+	const [showFirstTimeDialog, setShowFirstTimeDialog] = useState(false);
+	const [showLeaderboard, setShowLeaderboard] = useState(false);
+	const scoreQueue = ScoreQueue.getInstance();
+	const userService = UserService.getInstance();
+	const leaderboardService = LeaderboardService.getInstance();
+
+	// Add keyboard event listener for space key
+	useEffect(() => {
+		const handleKeyPress = (e: KeyboardEvent) => {
+			if (e.code === 'Space') {
+				// Only start game if we're on the home screen
+				if (!isPlaying && !gameOver && !showLeaderboard && !showNameDialog && !showFirstTimeDialog) {
+					e.preventDefault(); // Prevent page scroll
+					startGame();
+				}
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyPress);
+		return () => window.removeEventListener('keydown', handleKeyPress);
+	}, [isPlaying, gameOver, showLeaderboard, showNameDialog, showFirstTimeDialog, startGame]);
+
+	const handleGameOver = () => {
+		if (userService.isFirstTimeUser()) {
+			setShowFirstTimeDialog(true);
+		} else if (userService.hasUserProfile()) {
+			const userProfile = userService.getUserProfile();
+			if (userProfile && leaderboardService.isNewHighScore(userProfile.id, score)) {
+				setShowNameDialog(true);
+			} else {
+				handlePlayAgain();
+			}
+		} else {
+			// User has chosen to play as guest before
+			handlePlayAgain();
+		}
+	};
+
+	const handleCreateAccount = () => {
+		setShowNameDialog(true);
+	};
+
+	const handleGuestContinue = () => {
+		setShowFirstTimeDialog(false);
+		handlePlayAgain();
+	};
+
+	const handleScoreSubmit = () => {
+		setShowNameDialog(false);
+		setShowFirstTimeDialog(false);
+	};
+
+	const handlePlayAgain = () => {
+		const userProfile = userService.getUserProfile();
+		if (!userProfile) {
+			resetGame();
+			return;
+		}
+
+		scoreQueue.addScore({
+			playerId: userProfile.id,
+			username: userProfile.username,
+			score,
+			coins,
+		});
+
+		resetGame();
+	};
+
+	const getHighScoreDisplay = () => {
+		const userProfile = userService.getUserProfile();
+		if (!userProfile) return null;
+
+		const highScore = leaderboardService.getHighScore(userProfile.id);
+		const isNewHighScore = score > highScore;
+
+		return (
+			<div className="high-score-display">
+				{isNewHighScore ? (
+					<p className="new-high-score">New High Score!</p>
+				) : (
+					<p>High Score: {highScore}</p>
+				)}
+			</div>
+		);
+	};
+
 	return (
 		<div className="game-ui">
+			{/* User Profile - always visible except during gameplay */}
+			{!isPlaying && <UserProfileDisplay />}
+
 			{/* HUD - always visible during gameplay */}
 			{isPlaying && !gameOver && (
 				<div className="hud">
@@ -60,9 +159,17 @@ export const GameUI = () => {
 							</div>
 						</div>
 					</div>
-					<button className="start-button" onClick={startGame}>
-						Start Game
-					</button>
+					<div className="start-buttons">
+						<button className="start-button" onClick={startGame}>
+							Start Game
+						</button>
+						<button 
+							className="leaderboard-button" 
+							onClick={() => setShowLeaderboard(true)}
+						>
+							Leaderboard
+						</button>
+					</div>
 				</div>
 			)}
 
@@ -79,15 +186,43 @@ export const GameUI = () => {
 			)}
 
 			{/* Game Over Screen */}
-			{gameOver && (
+			{gameOver && !showNameDialog && !showFirstTimeDialog && (
 				<div className="game-over-screen">
 					<h2>Game Over</h2>
 					<div className="final-score">
 						<p>Score: {score}</p>
 						<p>Coins: {coins}</p>
+						{getHighScoreDisplay()}
 					</div>
-					<button onClick={resetGame}>Play Again</button>
+					{!userService.hasUserProfile() && (
+						<button onClick={handleGameOver}>Submit Score</button>
+					)}
+					<button onClick={handlePlayAgain}>Play Again</button>
 				</div>
+			)}
+
+			{/* First Time User Dialog */}
+			{showFirstTimeDialog && (
+				<FirstTimeUserDialog
+					onSubmit={handleScoreSubmit}
+					onContinueAsGuest={handleGuestContinue}
+					finalScore={score}
+					coins={coins}
+				/>
+			)}
+
+			{/* Regular Name Submission Dialog */}
+			{showNameDialog && (
+				<NameSubmissionDialog
+					onSubmit={handleScoreSubmit}
+					finalScore={score}
+					coins={coins}
+				/>
+			)}
+
+			{/* Leaderboard Modal */}
+			{showLeaderboard && (
+				<LeaderboardModal onClose={() => setShowLeaderboard(false)} />
 			)}
 		</div>
 	);
