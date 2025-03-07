@@ -73,6 +73,7 @@ export const GameUI = () => {
 
 	const handlePlayAgain = () => {
 		const userProfile = userService.getUserProfile();
+		console.log("userProfile", userProfile);
 		if (!userProfile) {
 			resetGame();
 			return;

@@ -42,7 +42,8 @@ export class ScoreQueue {
         const storedScores = JSON.parse(localStorage.getItem('cachedLeaderboard') || '[]');  
         const currentScores = this.queue.map(score => score.score);
         const maxScore = Math.max(...currentScores);
-        if (storedScores.length === 0 || (maxScore > storedScores[0].score)) {
+        const storedScoresforCurrentUser = storedScores.filter(score => score.playerId === submission.playerId);
+        if (storedScoresforCurrentUser.length === 0 || (maxScore > storedScoresforCurrentUser[0].score)) {
             this.saveToStorage();
         } else {
             this.queue.pop();
