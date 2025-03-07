@@ -1,4 +1,4 @@
-import { ScoreSubmission } from './types';
+import { LeaderboardEntry, ScoreSubmission } from './types';
 
 interface QueuedScore extends ScoreSubmission {
     timestamp: number;
@@ -42,7 +42,7 @@ export class ScoreQueue {
         const storedScores = JSON.parse(localStorage.getItem('cachedLeaderboard') || '[]');  
         const currentScores = this.queue.map(score => score.score);
         const maxScore = Math.max(...currentScores);
-        const storedScoresforCurrentUser = storedScores.filter(score => score.playerId === submission.playerId);
+        const storedScoresforCurrentUser = storedScores.filter((score: LeaderboardEntry) => score.playerId === submission.playerId);
         if (storedScoresforCurrentUser.length === 0 || (maxScore > storedScoresforCurrentUser[0].score)) {
             this.saveToStorage();
         } else {
