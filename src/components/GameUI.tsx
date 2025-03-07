@@ -61,10 +61,6 @@ export const GameUI = () => {
 		}
 	};
 
-	const handleCreateAccount = () => {
-		setShowNameDialog(true);
-	};
-
 	const handleGuestContinue = () => {
 		setShowFirstTimeDialog(false);
 		handlePlayAgain();

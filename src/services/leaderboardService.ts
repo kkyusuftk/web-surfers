@@ -81,7 +81,7 @@ export default class LeaderboardService {
                 return false;
             }
 
-            const response = await fetch(this.SUBMIT_URL, {
+            await fetch(this.SUBMIT_URL, {
                 method: 'POST',
                 mode: 'no-cors', // Required for Google Apps Script
                 headers: {
