@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { useGameStore } from "../store/gameStore";
 import { Car } from "./Car";
 import { Obstacle } from "./Obstacle";
+import { BuildingGenerator } from "./BuildingGenerator";
 
 // Track segment length
 const SEGMENT_LENGTH = 60;
@@ -47,6 +48,11 @@ export const Environment = () => {
 		type: "Static",
 	}));
 
+	// State for obstacles
+	const [obstacles, setObstacles] = useState<ObstacleType[]>([]);
+	// State for track segments
+	const [trackSegments, setTrackSegments] = useState<TrackSegmentType[]>([]);
+
 	// Distance traveled
 	const distanceTraveled = useRef(0);
 	// Last segment position
@@ -55,11 +61,6 @@ export const Environment = () => {
 	const scoreCounter = useRef(0);
 	// Speed increase counter
 	const speedCounter = useRef(0);
-
-	// State for obstacles
-	const [obstacles, setObstacles] = useState<ObstacleType[]>([]);
-	// State for track segments
-	const [trackSegments, setTrackSegments] = useState<TrackSegmentType[]>([]);
 
 	// Initialize or reset the game environment
 	const initializeEnvironment = () => {
@@ -101,41 +102,24 @@ export const Environment = () => {
 	const generateObstaclesForSegment = (segmentZ: number) => {
 		const newObstacles: ObstacleType[] = [];
 
-		// Increased minimum number of obstacles per segment
-		const obstacleCount = Math.floor(Math.random() * 4) + 5; // 5-8 obstacles per segment
-
-		// Divide the segment into sections to ensure more even distribution
-		const sectionLength = SEGMENT_LENGTH / obstacleCount;
-
-		// Track which lanes were used in the previous section to avoid too many obstacles in the same lane
-		let previousLane = 0;
+		// Reduced number of obstacles per segment
+		const obstacleCount = Math.floor(Math.random() * 3) + 1; // 1-3 obstacles per segment
 
 		for (let i = 0; i < obstacleCount; i++) {
 			// Random lane: -1 (left), 0 (center), 1 (right)
-			// Avoid placing too many obstacles in the same lane consecutively
-			let lane;
-			if (Math.random() < 0.7) {
-				// 70% chance to avoid the previous lane
-				do {
-					lane = Math.floor(Math.random() * 3) - 1;
-				} while (lane === previousLane);
-			} else {
-				lane = Math.floor(Math.random() * 3) - 1;
-			}
-			previousLane = lane;
-
-			// Position within this section (add some randomness but keep in section)
-			const sectionStart = segmentZ + i * sectionLength;
-			const z = sectionStart + (Math.random() * 0.6 + 0.2) * sectionLength; // 20-80% into section
-
+			const lane = Math.floor(Math.random() * 3) - 1;
+			
+			// Position within segment
+			const z = segmentZ + Math.random() * SEGMENT_LENGTH;
+			
 			// Random type (70% car, 30% coin)
 			const type = Math.random() > 0.3 ? "car" : "coin";
-
-			// Height based on type - coins at player mid-height for easier collection
-			const y = type === "coin" ? 0.8 : 0.5;
-
+			
+			// Height based on type
+			const y = 0.5;
+			
 			// Random car color
-			const carColors = ["#3498db", "#e74c3c", "#2ecc71", "#f39c12", "#9b59b6"];
+			const carColors = ["red", "blue", "green", "yellow", "purple"];
 			const color = carColors[Math.floor(Math.random() * carColors.length)];
 
 			// Ensure we don't place obstacles too close to the start of the first segment
@@ -146,7 +130,7 @@ export const Environment = () => {
 
 			newObstacles.push({
 				position: [lane * LANE_WIDTH, y, z],
-				size: type === "car" ? [1.2, 0.9, 2] : [0.8, 0.05, 0.8],
+				size: type === "car" ? [1, 1, 2] : [0.5, 0.5, 0.1],
 				type,
 				color: type === "car" ? color : "gold",
 				id: `obstacle-${Date.now()}-${Math.random()}`,
@@ -251,9 +235,9 @@ export const Environment = () => {
 
 	return (
 		<>
-			{/* Ground plane - extended to be much larger */}
+			{/* Ground plane */}
 			<mesh ref={ref as any} receiveShadow position={[0, -0.01, 0]}>
-				<planeGeometry args={[500, 500]} />
+				<planeGeometry args={[100, 100]} />
 				<meshStandardMaterial color="#444444" />
 			</mesh>
 
@@ -293,6 +277,9 @@ export const Environment = () => {
 				</group>
 			))}
 
+			{/* Buildings */}
+			<BuildingGenerator />
+
 			{/* Obstacles */}
 			{obstacles.map((obstacle) =>
 				obstacle.type === "car" ? (
@@ -312,9 +299,9 @@ export const Environment = () => {
 				),
 			)}
 
-			{/* Skybox - made larger */}
+			{/* Skybox */}
 			<mesh>
-				<sphereGeometry args={[200, 32, 32]} />
+				<sphereGeometry args={[50, 32, 32]} />
 				<meshStandardMaterial color="#87CEEB" side={THREE.BackSide} />
 			</mesh>
 		</>

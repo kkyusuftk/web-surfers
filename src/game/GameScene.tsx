@@ -71,7 +71,7 @@ export const GameScene = () => {
 			<Suspense fallback={null}>
 				<Sky sunPosition={[100, 20, 100]} />
 
-				<ambientLight intensity={0.3} />
+				<ambientLight intensity={0.5} />
 				<directionalLight
 					castShadow
 					position={[10, 10, 5]}
