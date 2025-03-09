@@ -1,7 +1,7 @@
 import { useBox } from "@react-three/cannon";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import type * as THREE from "three";
+import * as THREE from "three";
 import { useGameStore } from "../store/gameStore";
 
 interface ObstacleProps {
@@ -34,6 +34,9 @@ export const Obstacle = ({
 				if (coinRef.current) {
 					coinRef.current.visible = false;
 				}
+				if (glowRef.current) {
+					glowRef.current.visible = false;
+				}
 			}
 		},
 	}));
@@ -60,38 +63,46 @@ export const Obstacle = ({
 	const pulseRef = useRef(0);
 
 	useFrame((_, delta) => {
-		if (!isPlaying || isPaused || !coinRef.current) return;
+		if (!isPlaying || isPaused) return;
 
-		// Rotate coins like a globe (around Y axis)
-		rotationRef.current += delta * 4; // Faster rotation
-		coinRef.current.rotation.y = rotationRef.current;
+		if (coinRef.current) {
+			// Rotate coins (around Y axis only)
+			rotationRef.current += delta * 3;
+			coinRef.current.rotation.y = rotationRef.current;
 
-		// Add more pronounced hover animation
-		hoverRef.current += delta * 3;
-		const hoverOffset = Math.sin(hoverRef.current) * 0.1; // Increased amplitude
-		api.position.set(
-			obstaclePosition.current[0],
-			obstaclePosition.current[1] + hoverOffset,
-			obstaclePosition.current[2],
-		);
-
-		// Update visual coin position to match physics body
-		coinRef.current.position.set(
-			obstaclePosition.current[0],
-			obstaclePosition.current[1],
-			obstaclePosition.current[2],
-		);
+			// Add hover animation
+			hoverRef.current += delta * 2.5;
+			const hoverOffset = Math.sin(hoverRef.current) * 0.1;
+			
+			// Update coin position
+			coinRef.current.position.set(
+				obstaclePosition.current[0],
+				obstaclePosition.current[1] + hoverOffset,
+				obstaclePosition.current[2]
+			);
+			
+			// Update physics body position
+			api.position.set(
+				obstaclePosition.current[0],
+				obstaclePosition.current[1] + hoverOffset,
+				obstaclePosition.current[2]
+			);
+		}
 
 		// Pulse the glow effect
 		if (glowRef.current) {
 			pulseRef.current += delta * 2;
-			const pulseScale = 1 + Math.sin(pulseRef.current) * 0.1;
-			glowRef.current.scale.set(pulseScale, pulseScale, 1);
+			const pulseScale = 1 + Math.sin(pulseRef.current) * 0.2;
+			
+			// Update glow position to match coin
 			glowRef.current.position.set(
 				obstaclePosition.current[0],
-				obstaclePosition.current[1],
-				obstaclePosition.current[2],
+				obstaclePosition.current[1] + (Math.sin(hoverRef.current) * 0.1), // Match hover
+				obstaclePosition.current[2]
 			);
+			
+			// Scale the glow for pulsing effect
+			glowRef.current.scale.set(pulseScale, pulseScale, pulseScale);
 		}
 	});
 
@@ -105,29 +116,33 @@ export const Obstacle = ({
 			{/* Invisible physics body */}
 			<mesh ref={ref as any} visible={false} />
 
-			{/* Glow effect behind coin */}
+			{/* Glow sphere around coin */}
 			<mesh 
 				ref={glowRef} 
-				rotation={[0, 0, Math.PI / 2]}
 				position={[position[0], position[1], position[2]]}
 			>
-				<cylinderGeometry args={[0.6, 0.6, 0.01, 32]} />
+				<sphereGeometry args={[0.6, 16, 16]} />
 				<meshBasicMaterial 
 					color="#ffcc00" 
 					transparent={true} 
-					opacity={0.6}
+					opacity={0.3}
+					side={THREE.DoubleSide}
 				/>
 			</mesh>
 
-			{/* Visible coin that rotates */}
-			<mesh ref={coinRef} castShadow rotation={[0, 0, Math.PI / 2]}>
-				<cylinderGeometry args={[0.4, 0.4, 0.1, 32]} /> {/* Thicker coin */}
+			{/* Visible coin */}
+			<mesh 
+				ref={coinRef} 
+				castShadow 
+				position={[position[0], position[1], position[2]]}
+			>
+				<cylinderGeometry args={[0.35, 0.35, 0.1, 32]} />
 				<meshStandardMaterial
 					color={color}
-					metalness={0.9}
+					metalness={1.0}
 					roughness={0.2}
 					emissive={color}
-					emissiveIntensity={0.6} // Increased glow
+					emissiveIntensity={0.8}
 				/>
 			</mesh>
 		</group>
