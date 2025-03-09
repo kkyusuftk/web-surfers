@@ -102,8 +102,8 @@ export const Environment = () => {
 	const generateObstaclesForSegment = (segmentZ: number) => {
 		const newObstacles: ObstacleType[] = [];
 
-		// Reduced number of obstacles per segment
-		const obstacleCount = Math.floor(Math.random() * 3) + 1; // 1-3 obstacles per segment
+		// Increased number of obstacles per segment
+		const obstacleCount = Math.floor(Math.random() * 4) + 3; // 3-6 obstacles per segment
 
 		for (let i = 0; i < obstacleCount; i++) {
 			// Random lane: -1 (left), 0 (center), 1 (right)
@@ -112,14 +112,14 @@ export const Environment = () => {
 			// Position within segment
 			const z = segmentZ + Math.random() * SEGMENT_LENGTH;
 			
-			// Random type (70% car, 30% coin)
-			const type = Math.random() > 0.3 ? "car" : "coin";
+			// Random type (60% car, 40% coin) - increased coin probability
+			const type = Math.random() > 0.4 ? "car" : "coin";
 			
 			// Height based on type
-			const y = 0.5;
+			const y = type === "coin" ? 0.8 : 0.5; // Raised coins for easier visibility
 			
 			// Random car color
-			const carColors = ["red", "blue", "green", "yellow", "purple"];
+			const carColors = ["red", "blue", "green", "yellow", "purple", "orange", "teal"];
 			const color = carColors[Math.floor(Math.random() * carColors.length)];
 
 			// Ensure we don't place obstacles too close to the start of the first segment
@@ -128,13 +128,28 @@ export const Environment = () => {
 				continue;
 			}
 
-			newObstacles.push({
-				position: [lane * LANE_WIDTH, y, z],
-				size: type === "car" ? [1, 1, 2] : [0.5, 0.5, 0.1],
-				type,
-				color: type === "car" ? color : "gold",
-				id: `obstacle-${Date.now()}-${Math.random()}`,
-			});
+			// Add coins in clusters sometimes
+			if (type === "coin" && Math.random() > 0.7) {
+				// Create a line of coins
+				const coinCount = Math.floor(Math.random() * 3) + 2; // 2-4 coins in a row
+				for (let j = 0; j < coinCount; j++) {
+					newObstacles.push({
+						position: [lane * LANE_WIDTH, y, z + j * 1.5] as [number, number, number],
+						size: [0.5, 0.5, 0.1],
+						type: "coin",
+						id: `coin-${segmentZ}-${i}-${j}`,
+						color: "gold"
+					});
+				}
+			} else {
+				newObstacles.push({
+					position: [lane * LANE_WIDTH, y, z] as [number, number, number],
+					size: type === "car" ? [1, 1, 2] : [0.5, 0.5, 0.1],
+					type,
+					color: type === "car" ? color : "gold",
+					id: `obstacle-${Date.now()}-${Math.random()}`,
+				});
+			}
 		}
 
 		return newObstacles;

@@ -40,6 +40,8 @@ export const Obstacle = ({
 
 	// Separate ref for the visual coin mesh
 	const coinRef = useRef<THREE.Mesh>(null);
+	// Ref for the glow effect
+	const glowRef = useRef<THREE.Mesh>(null);
 
 	// Store position in ref for use in animations
 	const obstaclePosition = useRef(position);
@@ -55,17 +57,18 @@ export const Obstacle = ({
 	// Animation for coins
 	const rotationRef = useRef(0);
 	const hoverRef = useRef(0);
+	const pulseRef = useRef(0);
 
 	useFrame((_, delta) => {
 		if (!isPlaying || isPaused || !coinRef.current) return;
 
 		// Rotate coins like a globe (around Y axis)
-		rotationRef.current += delta * 3;
+		rotationRef.current += delta * 4; // Faster rotation
 		coinRef.current.rotation.y = rotationRef.current;
 
-		// Add subtle hover animation
-		hoverRef.current += delta * 2;
-		const hoverOffset = Math.sin(hoverRef.current) * 0.05;
+		// Add more pronounced hover animation
+		hoverRef.current += delta * 3;
+		const hoverOffset = Math.sin(hoverRef.current) * 0.1; // Increased amplitude
 		api.position.set(
 			obstaclePosition.current[0],
 			obstaclePosition.current[1] + hoverOffset,
@@ -78,6 +81,18 @@ export const Obstacle = ({
 			obstaclePosition.current[1],
 			obstaclePosition.current[2],
 		);
+
+		// Pulse the glow effect
+		if (glowRef.current) {
+			pulseRef.current += delta * 2;
+			const pulseScale = 1 + Math.sin(pulseRef.current) * 0.1;
+			glowRef.current.scale.set(pulseScale, pulseScale, 1);
+			glowRef.current.position.set(
+				obstaclePosition.current[0],
+				obstaclePosition.current[1],
+				obstaclePosition.current[2],
+			);
+		}
 	});
 
 	// Update physics position when prop position changes
@@ -90,15 +105,29 @@ export const Obstacle = ({
 			{/* Invisible physics body */}
 			<mesh ref={ref as any} visible={false} />
 
+			{/* Glow effect behind coin */}
+			<mesh 
+				ref={glowRef} 
+				rotation={[0, 0, Math.PI / 2]}
+				position={[position[0], position[1], position[2]]}
+			>
+				<cylinderGeometry args={[0.6, 0.6, 0.01, 32]} />
+				<meshBasicMaterial 
+					color="#ffcc00" 
+					transparent={true} 
+					opacity={0.6}
+				/>
+			</mesh>
+
 			{/* Visible coin that rotates */}
 			<mesh ref={coinRef} castShadow rotation={[0, 0, Math.PI / 2]}>
-				<cylinderGeometry args={[0.4, 0.4, 0.05, 32]} />
+				<cylinderGeometry args={[0.4, 0.4, 0.1, 32]} /> {/* Thicker coin */}
 				<meshStandardMaterial
 					color={color}
-					metalness={0.8}
-					roughness={0.3}
+					metalness={0.9}
+					roughness={0.2}
 					emissive={color}
-					emissiveIntensity={0.4}
+					emissiveIntensity={0.6} // Increased glow
 				/>
 			</mesh>
 		</group>

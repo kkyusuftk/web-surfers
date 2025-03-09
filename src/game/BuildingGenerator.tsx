@@ -3,21 +3,28 @@ import { useFrame } from '@react-three/fiber';
 import { Building } from './Building';
 import { useGameStore } from '../store/gameStore';
 
-// Building types for variety
+// Building types for variety - added more types
 const BUILDING_TYPES = [
     { width: 2, height: 3, depth: 2, color: '#555555' }, // Small gray building
     { width: 2.5, height: 4, depth: 2.5, color: '#775544' }, // Small brown building
     { width: 2, height: 3.5, depth: 2, color: '#445566' }, // Small blue-gray building
     { width: 3, height: 4, depth: 2, color: '#665544' }, // Medium brown building
     { width: 2.5, height: 3, depth: 2.5, color: '#554455' }, // Small purple-gray building
+    { width: 2.2, height: 3.2, depth: 2.2, color: '#665566' }, // Blue-gray building
+    { width: 2.8, height: 3.8, depth: 2.8, color: '#556677' }, // Blue building
+    { width: 2.3, height: 3.5, depth: 2.3, color: '#665555' }, // Red-brown building
+    { width: 2.7, height: 4.2, depth: 2.7, color: '#777777' }, // Gray building
+    { width: 2.4, height: 3.7, depth: 2.4, color: '#444444' }, // Dark building
 ];
 
 // Distance from road center
 const ROAD_OFFSET = 7;
-// Building spacing
-const BUILDING_SPACING = 15;
-// Total number of buildings per side
-const BUILDINGS_PER_SIDE = 10;
+// Building spacing - reduced to make buildings closer together
+const BUILDING_SPACING = 10;
+// Total number of buildings per side - increased
+const BUILDINGS_PER_SIDE = 15;
+// Second row offset
+const SECOND_ROW_OFFSET = 12;
 // Total distance covered by buildings
 const TOTAL_DISTANCE = BUILDING_SPACING * BUILDINGS_PER_SIDE;
 
@@ -38,14 +45,14 @@ export const BuildingGenerator = () => {
     function generateInitialBuildings(): BuildingData[] {
         const initialBuildings: BuildingData[] = [];
         
-        // Generate buildings on left side
+        // Generate buildings on left side - first row
         for (let i = 0; i < BUILDINGS_PER_SIDE; i++) {
             const z = -i * BUILDING_SPACING;
             const typeIndex = Math.floor(Math.random() * BUILDING_TYPES.length);
             const type = BUILDING_TYPES[typeIndex];
             
             initialBuildings.push({
-                id: `left-${i}`,
+                id: `left-1-${i}`,
                 position: [-ROAD_OFFSET, type.height / 2, z] as [number, number, number],
                 width: type.width,
                 height: type.height,
@@ -54,15 +61,47 @@ export const BuildingGenerator = () => {
             });
         }
         
-        // Generate buildings on right side
+        // Generate buildings on left side - second row
+        for (let i = 0; i < BUILDINGS_PER_SIDE; i++) {
+            const z = -i * BUILDING_SPACING - 5; // Offset to stagger buildings
+            const typeIndex = Math.floor(Math.random() * BUILDING_TYPES.length);
+            const type = BUILDING_TYPES[typeIndex];
+            
+            initialBuildings.push({
+                id: `left-2-${i}`,
+                position: [-ROAD_OFFSET - SECOND_ROW_OFFSET, type.height / 2, z] as [number, number, number],
+                width: type.width,
+                height: type.height,
+                depth: type.depth,
+                color: type.color
+            });
+        }
+        
+        // Generate buildings on right side - first row
         for (let i = 0; i < BUILDINGS_PER_SIDE; i++) {
             const z = -i * BUILDING_SPACING;
             const typeIndex = Math.floor(Math.random() * BUILDING_TYPES.length);
             const type = BUILDING_TYPES[typeIndex];
             
             initialBuildings.push({
-                id: `right-${i}`,
+                id: `right-1-${i}`,
                 position: [ROAD_OFFSET, type.height / 2, z] as [number, number, number],
+                width: type.width,
+                height: type.height,
+                depth: type.depth,
+                color: type.color
+            });
+        }
+        
+        // Generate buildings on right side - second row
+        for (let i = 0; i < BUILDINGS_PER_SIDE; i++) {
+            const z = -i * BUILDING_SPACING - 5; // Offset to stagger buildings
+            const typeIndex = Math.floor(Math.random() * BUILDING_TYPES.length);
+            const type = BUILDING_TYPES[typeIndex];
+            
+            initialBuildings.push({
+                id: `right-2-${i}`,
+                position: [ROAD_OFFSET + SECOND_ROW_OFFSET, type.height / 2, z] as [number, number, number],
                 width: type.width,
                 height: type.height,
                 depth: type.depth,
@@ -74,10 +113,20 @@ export const BuildingGenerator = () => {
     }
     
     // Function to create a new building
-    function createNewBuilding(side: 'left' | 'right', z: number): BuildingData {
+    function createNewBuilding(side: 'left-1' | 'left-2' | 'right-1' | 'right-2', z: number): BuildingData {
         const typeIndex = Math.floor(Math.random() * BUILDING_TYPES.length);
         const type = BUILDING_TYPES[typeIndex];
-        const x = side === 'left' ? -ROAD_OFFSET : ROAD_OFFSET;
+        
+        let x: number;
+        if (side === 'left-1') {
+            x = -ROAD_OFFSET;
+        } else if (side === 'left-2') {
+            x = -ROAD_OFFSET - SECOND_ROW_OFFSET;
+        } else if (side === 'right-1') {
+            x = ROAD_OFFSET;
+        } else {
+            x = ROAD_OFFSET + SECOND_ROW_OFFSET;
+        }
         
         return {
             id: `${side}-${Date.now()}-${Math.random()}`,
@@ -111,13 +160,35 @@ export const BuildingGenerator = () => {
             const updatedBuildings = movedBuildings.map(building => {
                 // If building has moved past the player by a certain amount, move it to the back
                 if (building.position[2] > 20) {
-                    const side = building.position[0] < 0 ? 'left' : 'right';
+                    // Determine which side and row the building is on
+                    let side: 'left-1' | 'left-2' | 'right-1' | 'right-2';
+                    if (building.position[0] < -ROAD_OFFSET - 2) {
+                        side = 'left-2';
+                    } else if (building.position[0] < 0) {
+                        side = 'left-1';
+                    } else if (building.position[0] < ROAD_OFFSET + 2) {
+                        side = 'right-1';
+                    } else {
+                        side = 'right-2';
+                    }
+                    
                     // Find the furthest building on this side
-                    const furthestBuilding = movedBuildings
-                        .filter(b => (b.position[0] < 0) === (side === 'left'))
-                        .reduce((prev, curr) => 
-                            prev.position[2] < curr.position[2] ? prev : curr
-                        );
+                    const sideBuildings = movedBuildings.filter(b => {
+                        if (side === 'left-1') {
+                            return b.position[0] > -ROAD_OFFSET - 2 && b.position[0] < 0;
+                        } else if (side === 'left-2') {
+                            return b.position[0] < -ROAD_OFFSET - 2;
+                        } else if (side === 'right-1') {
+                            return b.position[0] > 0 && b.position[0] < ROAD_OFFSET + 2;
+                        } else {
+                            return b.position[0] > ROAD_OFFSET + 2;
+                        }
+                    });
+                    
+                    const furthestBuilding = sideBuildings.reduce((prev, curr) => 
+                        prev.position[2] < curr.position[2] ? prev : curr, 
+                        sideBuildings[0] || building
+                    );
                     
                     // Position this building behind the furthest one
                     const newZ = furthestBuilding.position[2] - BUILDING_SPACING;
