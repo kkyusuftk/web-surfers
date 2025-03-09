@@ -295,27 +295,43 @@ export const Environment = () => {
 			{/* Track segments */}
 			{trackSegments.map((segment) => (
 				<group key={segment.id} position={[0, 0, segment.position]}>
-					{/* Base track */}
+					{/* Base track - darker asphalt color */}
 					<mesh position={[0, 0.01, SEGMENT_LENGTH / 2]} receiveShadow>
 						<boxGeometry args={[6, 0.02, SEGMENT_LENGTH]} />
-						<meshStandardMaterial color="#666666" />
+						<meshStandardMaterial color="#333333" />
 					</mesh>
 
-					{/* Lane dividers */}
+					{/* Continuous Lane dividers */}
+					{Array.from({ length: Math.floor(SEGMENT_LENGTH / 3) }).map((_, i) => (
 					<mesh
-						position={[-LANE_WIDTH, 0.02, SEGMENT_LENGTH / 2]}
+						key={`left-dash-${i}`}
+						position={[-LANE_WIDTH, 0.02, i * 3 + 1]}
 						receiveShadow
 					>
-						<boxGeometry args={[0.1, 0.03, SEGMENT_LENGTH]} />
+						<boxGeometry args={[0.1, 0.03, 1.5]} />
 						<meshStandardMaterial color="white" />
 					</mesh>
-
-					<mesh position={[LANE_WIDTH, 0.02, SEGMENT_LENGTH / 2]} receiveShadow>
-						<boxGeometry args={[0.1, 0.03, SEGMENT_LENGTH]} />
+					))}
+					{Array.from({ length: Math.floor(SEGMENT_LENGTH / 3) }).map((_, i) => (
+					<mesh position={[LANE_WIDTH, 0.02, i * 3 + 1]} receiveShadow>
+						<boxGeometry args={[0.1, 0.03, 1.5]} />
 						<meshStandardMaterial color="white" />
 					</mesh>
+					))}
 
-					{/* Side barriers */}
+					{/* Center lane dashed markings */}
+					{Array.from({ length: Math.floor(SEGMENT_LENGTH / 3) }).map((_, i) => (
+						<mesh
+							key={`center-dash-${i}`}
+							position={[0, 0.02, i * 3 + 1]}
+							receiveShadow
+						>
+							<boxGeometry args={[0.1, 0.03, 1.5]} />
+							<meshStandardMaterial color="white" />
+						</mesh>
+					))}
+
+					{/* Side barriers - gray guard rails */}
 					<mesh position={[-3, 0.5, SEGMENT_LENGTH / 2]} receiveShadow>
 						<boxGeometry args={[0.2, 1, SEGMENT_LENGTH]} />
 						<meshStandardMaterial color="#888888" />

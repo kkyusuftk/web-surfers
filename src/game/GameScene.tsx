@@ -69,20 +69,38 @@ export const GameScene = () => {
 	return (
 		<Canvas shadows>
 			<Suspense fallback={null}>
-				<Sky sunPosition={[100, 20, 100]} />
+				<Sky 
+					sunPosition={[0, 10, 0]} 
+					inclination={0} 
+					azimuth={0.25} 
+					distance={1000} 
+					rayleigh={0.25} 
+					turbidity={10}
+				/>
 
-				<ambientLight intensity={0.5} />
+				{/* Brighter ambient light for a sunny day */}
+				<ambientLight intensity={0.8} color="#ffffff" />
+				
+				{/* Main directional light positioned directly above */}
 				<directionalLight
 					castShadow
-					position={[10, 10, 5]}
-					intensity={1.5}
-					shadow-mapSize-width={1024}
-					shadow-mapSize-height={1024}
+					position={[0, 20, 0]} 
+					intensity={2.0}
+					color="#fff6e7" 
+					shadow-mapSize-width={2048}
+					shadow-mapSize-height={2048}
 					shadow-camera-far={50}
-					shadow-camera-left={-10}
-					shadow-camera-right={10}
-					shadow-camera-top={10}
-					shadow-camera-bottom={-10}
+					shadow-camera-left={-15}
+					shadow-camera-right={15}
+					shadow-camera-top={15}
+					shadow-camera-bottom={-15}
+				/>
+				
+				{/* Additional fill light for better illumination */}
+				<directionalLight
+					position={[10, 10, 10]}
+					intensity={0.4}
+					color="#ffe0bd"
 				/>
 
 				{/* Follow camera */}
