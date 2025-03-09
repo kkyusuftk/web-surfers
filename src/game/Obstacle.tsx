@@ -71,8 +71,11 @@ export const Obstacle = ({
 			coinRef.current.rotation.y = rotationRef.current;
 
 			// Add hover animation
-			hoverRef.current += delta * 2.5;
-			const hoverOffset = Math.sin(hoverRef.current) * 0.1;
+			hoverRef.current += delta * 1.5;
+			const hoverOffset = Math.sin(hoverRef.current) * 0.05;
+			
+			// Set initial rotation to face the character
+			coinRef.current.rotation.x = Math.PI / 2; // Rotate 90 degrees to face up
 			
 			// Update coin position
 			coinRef.current.position.set(

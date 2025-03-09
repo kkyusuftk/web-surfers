@@ -16,6 +16,9 @@ const LANE_WIDTH = 2;
 // Player Z position (fixed)
 const PLAYER_Z_POSITION = 0;
 
+// Define curvature for track segments
+const CURVATURE = 0.1; // Adjust this value for more or less curvature
+
 // Obstacle types
 type ObstacleType = {
 	position: [number, number, number];
@@ -28,6 +31,7 @@ type ObstacleType = {
 // Track segment type
 type TrackSegmentType = {
 	position: number;
+	curveAngle: number;
 	id: string;
 };
 
@@ -71,10 +75,9 @@ export const Environment = () => {
 		speedCounter.current = 0;
 
 		// Create initial track segments
-		const initialSegments = Array.from({ length: SEGMENTS_COUNT }, (_, i) => ({
-			position: PLAYER_Z_POSITION - i * SEGMENT_LENGTH,
-			id: `segment-initial-${i}-${Date.now()}`,
-		}));
+		const initialSegments = Array.from({ length: SEGMENTS_COUNT }, (_, i) =>
+			generateCurvedTrackSegment(PLAYER_Z_POSITION - i * SEGMENT_LENGTH)
+		);
 
 		setTrackSegments(initialSegments);
 
@@ -154,6 +157,38 @@ export const Environment = () => {
 
 		return newObstacles;
 	};
+
+	// Update track segment generation to include curvature
+	const generateCurvedTrackSegment = (segmentZ: number) => {
+		const curveAngle = Math.sin(segmentZ * CURVATURE) * Math.PI / 8; // Calculate curve angle
+		return {
+			position: segmentZ,
+			curveAngle,
+			id: `segment-${Date.now()}-${Math.random()}`,
+		};
+	};
+
+	// Update object placement to follow curvature
+	const updateObjectPositionForCurve = (position: [number, number, number], curveAngle: number) => {
+		const [x, y, z] = position;
+		const newX = x * Math.cos(curveAngle) - z * Math.sin(curveAngle);
+		const newZ = x * Math.sin(curveAngle) + z * Math.cos(curveAngle);
+		return [newX, y, newZ] as [number, number, number];
+	};
+
+	// Apply curvature to obstacles only when trackSegments change
+	useEffect(() => {
+		setObstacles((prevObstacles) => {
+			return prevObstacles.map((obstacle) => {
+				const segment = trackSegments.find((seg) => seg.position === obstacle.position[2]);
+				if (segment) {
+					const newPosition = updateObjectPositionForCurve(obstacle.position, segment.curveAngle);
+					return { ...obstacle, position: newPosition };
+				}
+				return obstacle;
+			});
+		});
+	}, [trackSegments]); // Add dependency to trackSegments
 
 	// Animation loop
 	useFrame((_, delta) => {
@@ -236,6 +271,7 @@ export const Environment = () => {
 				const newSegmentZ = furthestSegment.position - SEGMENT_LENGTH;
 				const newSegment = {
 					position: newSegmentZ,
+					curveAngle: furthestSegment.curveAngle,
 					id: `segment-${Date.now()}-${Math.random()}`,
 				};
 

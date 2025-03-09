@@ -95,9 +95,17 @@ export const useGameStore = create<GameState>((set) => ({
 	roll: () => set({ isRolling: true }),
 
 	addScore: (points) =>
-		set((state) => ({
-			score: state.score + points,
-		})),
+		set((state) => {
+			const newScore = state.score + points;
+			let newSpeed = state.speed;
+			if (newScore % 100 === 0 && newScore <= 1000) {
+				newSpeed += 1; // Increase speed by 1
+			}
+			return {
+				score: newScore,
+				speed: newSpeed,
+			};
+		}),
 
 	addCoin: () =>
 		set((state) => ({

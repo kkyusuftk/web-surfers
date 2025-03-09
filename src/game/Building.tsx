@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 
 interface BuildingProps {
     position: [number, number, number];

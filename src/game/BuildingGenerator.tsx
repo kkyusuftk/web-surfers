@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Building } from './Building';
 import { useGameStore } from '../store/gameStore';
@@ -26,7 +26,6 @@ const BUILDINGS_PER_SIDE = 15;
 // Second row offset
 const SECOND_ROW_OFFSET = 12;
 // Total distance covered by buildings
-const TOTAL_DISTANCE = BUILDING_SPACING * BUILDINGS_PER_SIDE;
 
 interface BuildingData {
     id: string;
@@ -112,31 +111,6 @@ export const BuildingGenerator = () => {
         return initialBuildings;
     }
     
-    // Function to create a new building
-    function createNewBuilding(side: 'left-1' | 'left-2' | 'right-1' | 'right-2', z: number): BuildingData {
-        const typeIndex = Math.floor(Math.random() * BUILDING_TYPES.length);
-        const type = BUILDING_TYPES[typeIndex];
-        
-        let x: number;
-        if (side === 'left-1') {
-            x = -ROAD_OFFSET;
-        } else if (side === 'left-2') {
-            x = -ROAD_OFFSET - SECOND_ROW_OFFSET;
-        } else if (side === 'right-1') {
-            x = ROAD_OFFSET;
-        } else {
-            x = ROAD_OFFSET + SECOND_ROW_OFFSET;
-        }
-        
-        return {
-            id: `${side}-${Date.now()}-${Math.random()}`,
-            position: [x, type.height / 2, z] as [number, number, number],
-            width: type.width,
-            height: type.height,
-            depth: type.depth,
-            color: type.color
-        };
-    }
     
     // Update buildings on each frame
     useFrame((_, delta) => {
